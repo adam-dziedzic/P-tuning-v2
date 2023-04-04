@@ -22,9 +22,9 @@ import torch
 from torch import _softmax_backward_data, nn
 from torch.nn import CrossEntropyLoss, LayerNorm
 
-
 from transformers.activations import ACT2FN
-from transformers.file_utils import add_code_sample_docstrings, add_start_docstrings, add_start_docstrings_to_model_forward
+from transformers.file_utils import add_code_sample_docstrings, add_start_docstrings, \
+    add_start_docstrings_to_model_forward
 from transformers.modeling_outputs import (
     BaseModelOutput,
     MaskedLMOutput,
@@ -35,7 +35,6 @@ from transformers.modeling_outputs import (
 from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import logging
 from transformers.models.deberta_v2.configuration_deberta_v2 import DebertaV2Config
-
 
 logger = logging.get_logger(__name__)
 
@@ -234,14 +233,14 @@ class DebertaV2Attention(nn.Module):
         self.config = config
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask,
-        return_att=False,
-        query_states=None,
-        relative_pos=None,
-        rel_embeddings=None,
-        past_key_value=None,
+            self,
+            hidden_states,
+            attention_mask,
+            return_att=False,
+            query_states=None,
+            relative_pos=None,
+            rel_embeddings=None,
+            past_key_value=None,
     ):
         self_output = self.self(
             hidden_states,
@@ -305,14 +304,14 @@ class DebertaV2Layer(nn.Module):
         self.output = DebertaV2Output(config)
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask,
-        return_att=False,
-        query_states=None,
-        relative_pos=None,
-        rel_embeddings=None,
-        past_key_value=None,
+            self,
+            hidden_states,
+            attention_mask,
+            return_att=False,
+            query_states=None,
+            relative_pos=None,
+            rel_embeddings=None,
+            past_key_value=None,
     ):
         self_attn_past_key_value = past_key_value[:2] if past_key_value is not None else None
         attention_output = self.attention(
@@ -424,15 +423,15 @@ class DebertaV2Encoder(nn.Module):
         return relative_pos
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask,
-        output_hidden_states=True,
-        output_attentions=False,
-        query_states=None,
-        relative_pos=None,
-        return_dict=True,
-        past_key_values=None,
+            self,
+            hidden_states,
+            attention_mask,
+            output_hidden_states=True,
+            output_attentions=False,
+            query_states=None,
+            relative_pos=None,
+            return_dict=True,
+            past_key_values=None,
     ):
         if attention_mask.dim() <= 2:
             input_mask = attention_mask
@@ -444,7 +443,7 @@ class DebertaV2Encoder(nn.Module):
         all_hidden_states = () if output_hidden_states else None
         all_attentions = () if output_attentions else None
 
-        if isinstance(hidden_states, Sequence): # False
+        if isinstance(hidden_states, Sequence):  # False
             next_kv = hidden_states[0]
         else:
             next_kv = hidden_states
@@ -605,14 +604,14 @@ class DisentangledSelfAttention(nn.Module):
         # return x.permute(0, 2, 1, 3).contiguous().view(-1, x.size(1), x.size(-1))
 
     def forward(
-        self,
-        hidden_states,
-        attention_mask,
-        return_att=False,
-        query_states=None,
-        relative_pos=None,
-        rel_embeddings=None,
-        past_key_value=None,
+            self,
+            hidden_states,
+            attention_mask,
+            return_att=False,
+            query_states=None,
+            relative_pos=None,
+            rel_embeddings=None,
+            past_key_value=None,
     ):
         """
         Call the module
@@ -637,15 +636,17 @@ class DisentangledSelfAttention(nn.Module):
         """
         if query_states is None:
             query_states = hidden_states
-        
+
         past_key_value_length = past_key_value.shape[3] if past_key_value is not None else 0
         if past_key_value is not None:
-            key_layer_prefix = self.transpose_for_scores(self.key_proj(hidden_states), self.num_attention_heads, past_key_value=past_key_value[0])
+            key_layer_prefix = self.transpose_for_scores(self.key_proj(hidden_states), self.num_attention_heads,
+                                                         past_key_value=past_key_value[0])
             # value_layer_prefix = self.transpose_for_scores(self.value_proj(hidden_states), self.num_attention_heads, past_key_value=past_key_value[1])
-        
+
         query_layer = self.transpose_for_scores(self.query_proj(query_states), self.num_attention_heads)
         key_layer = self.transpose_for_scores(self.key_proj(hidden_states), self.num_attention_heads)
-        value_layer = self.transpose_for_scores(self.value_proj(hidden_states), self.num_attention_heads, past_key_value=past_key_value[1])
+        value_layer = self.transpose_for_scores(self.value_proj(hidden_states), self.num_attention_heads,
+                                                past_key_value=past_key_value[1])
 
         rel_att = None
         # Take the dot product between "query" and "key" to get the raw attention scores.
@@ -659,7 +660,7 @@ class DisentangledSelfAttention(nn.Module):
         scale = math.sqrt(query_layer.size(-1) * scale_factor)
         # attention_scores = torch.bmm(query_layer, key_layer.transpose(-1, -2)) / scale
         attention_scores = torch.bmm(query_layer, key_layer_prefix.transpose(-1, -2)) / scale
-        
+
         if self.relative_attention:
             rel_embeddings = self.pos_dropout(rel_embeddings)
             rel_att = self.disentangled_attention_bias(
@@ -680,7 +681,7 @@ class DisentangledSelfAttention(nn.Module):
         )
 
         # bsz x height x length x dimension
-        attention_mask = attention_mask[:,:, past_key_value_length:,:]
+        attention_mask = attention_mask[:, :, past_key_value_length:, :]
 
         attention_probs = XSoftmax.apply(attention_scores, attention_mask, -1)
         attention_probs = self.dropout(attention_probs)
@@ -717,8 +718,8 @@ class DisentangledSelfAttention(nn.Module):
         att_span = self.pos_ebd_size
         relative_pos = relative_pos.long().to(query_layer.device)
 
-        rel_embeddings = rel_embeddings[self.pos_ebd_size - att_span : self.pos_ebd_size + att_span, :].unsqueeze(0)
-        if self.share_att_key: # True
+        rel_embeddings = rel_embeddings[self.pos_ebd_size - att_span: self.pos_ebd_size + att_span, :].unsqueeze(0)
+        if self.share_att_key:  # True
             pos_query_layer = self.transpose_for_scores(
                 self.query_proj(rel_embeddings), self.num_attention_heads
             ).repeat(query_layer.size(0) // self.num_attention_heads, 1, 1)
@@ -836,7 +837,8 @@ class DebertaV2Embeddings(nn.Module):
         # position_ids (1, len position emb) is contiguous in memory and exported when serialized
         self.register_buffer("position_ids", torch.arange(config.max_position_embeddings).expand((1, -1)))
 
-    def forward(self, input_ids=None, token_type_ids=None, position_ids=None, mask=None, inputs_embeds=None, past_key_values_length=0,):
+    def forward(self, input_ids=None, token_type_ids=None, position_ids=None, mask=None, inputs_embeds=None,
+                past_key_values_length=0, ):
         if input_ids is not None:
             input_shape = input_ids.size()
         else:
@@ -846,7 +848,7 @@ class DebertaV2Embeddings(nn.Module):
 
         if position_ids is None:
             # position_ids = self.position_ids[:, :seq_length]
-            position_ids = self.position_ids[:, past_key_values_length : seq_length + past_key_values_length]
+            position_ids = self.position_ids[:, past_key_values_length: seq_length + past_key_values_length]
 
         if token_type_ids is None:
             token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=self.position_ids.device)
@@ -919,9 +921,9 @@ class DebertaV2PreTrainedModel(PreTrainedModel):
         """
         self_state = self.state_dict()
         if (
-            ("classifier.weight" in self_state)
-            and ("classifier.weight" in state_dict)
-            and self_state["classifier.weight"].size() != state_dict["classifier.weight"].size()
+                ("classifier.weight" in self_state)
+                and ("classifier.weight" in state_dict)
+                and self_state["classifier.weight"].size() != state_dict["classifier.weight"].size()
         ):
             logger.warning(
                 f"The checkpoint classifier head has a shape {state_dict['classifier.weight'].size()} and this model "
@@ -986,10 +988,6 @@ DEBERTA_INPUTS_DOCSTRING = r"""
 """
 
 
-@add_start_docstrings(
-    "The bare DeBERTa Model transformer outputting raw hidden-states without any specific head on top.",
-    DEBERTA_START_DOCSTRING,
-)
 # Copied from transformers.models.deberta.modeling_deberta.DebertaModel with Deberta->DebertaV2
 class DebertaV2Model(DebertaV2PreTrainedModel):
     def __init__(self, config):
@@ -1014,24 +1012,17 @@ class DebertaV2Model(DebertaV2PreTrainedModel):
         """
         raise NotImplementedError("The prune function is not implemented in DeBERTa model.")
 
-    @add_start_docstrings_to_model_forward(DEBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
-    @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
-        checkpoint=_CHECKPOINT_FOR_DOC,
-        output_type=SequenceClassifierOutput,
-        config_class=_CONFIG_FOR_DOC,
-    )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        inputs_embeds=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
-        past_key_values=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            inputs_embeds=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
+            past_key_values=None,
     ):
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
@@ -1068,7 +1059,7 @@ class DebertaV2Model(DebertaV2PreTrainedModel):
             # mask=attention_mask,
             mask=embedding_mask,
             inputs_embeds=inputs_embeds,
-            past_key_values_length=past_key_values_length, # Ongoing
+            past_key_values_length=past_key_values_length,  # Ongoing
         )
 
         encoder_outputs = self.encoder(
@@ -1077,7 +1068,7 @@ class DebertaV2Model(DebertaV2PreTrainedModel):
             output_hidden_states=True,
             output_attentions=output_attentions,
             return_dict=return_dict,
-            past_key_values=past_key_values, # Ongoing
+            past_key_values=past_key_values,  # Ongoing
         )
         encoded_layers = encoder_outputs[1]
 
@@ -1102,7 +1093,7 @@ class DebertaV2Model(DebertaV2PreTrainedModel):
         sequence_output = encoded_layers[-1]
 
         if not return_dict:
-            return (sequence_output,) + encoder_outputs[(1 if output_hidden_states else 2) :]
+            return (sequence_output,) + encoder_outputs[(1 if output_hidden_states else 2):]
 
         return BaseModelOutput(
             last_hidden_state=sequence_output,
@@ -1111,7 +1102,6 @@ class DebertaV2Model(DebertaV2PreTrainedModel):
         )
 
 
-@add_start_docstrings("""DeBERTa Model with a `language modeling` head on top. """, DEBERTA_START_DOCSTRING)
 # Copied from transformers.models.deberta.modeling_deberta.DebertaForMaskedLM with Deberta->DebertaV2
 class DebertaV2ForMaskedLM(DebertaV2PreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
@@ -1133,22 +1123,21 @@ class DebertaV2ForMaskedLM(DebertaV2PreTrainedModel):
 
     @add_start_docstrings_to_model_forward(DEBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint=_CHECKPOINT_FOR_DOC,
         output_type=MaskedLMOutput,
         config_class=_CONFIG_FOR_DOC,
     )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        inputs_embeds=None,
-        labels=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            inputs_embeds=None,
+            labels=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
@@ -1240,13 +1229,6 @@ class DebertaV2OnlyMLMHead(nn.Module):
         return prediction_scores
 
 
-@add_start_docstrings(
-    """
-    DeBERTa Model transformer with a sequence classification/regression head on top (a linear layer on top of the
-    pooled output) e.g. for GLUE tasks.
-    """,
-    DEBERTA_START_DOCSTRING,
-)
 # Copied from transformers.models.deberta.modeling_deberta.DebertaForSequenceClassification with Deberta->DebertaV2
 class DebertaV2ForSequenceClassification(DebertaV2PreTrainedModel):
     def __init__(self, config):
@@ -1272,24 +1254,17 @@ class DebertaV2ForSequenceClassification(DebertaV2PreTrainedModel):
     def set_input_embeddings(self, new_embeddings):
         self.deberta.set_input_embeddings(new_embeddings)
 
-    @add_start_docstrings_to_model_forward(DEBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
-    @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
-        checkpoint=_CHECKPOINT_FOR_DOC,
-        output_type=SequenceClassifierOutput,
-        config_class=_CONFIG_FOR_DOC,
-    )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        inputs_embeds=None,
-        labels=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            inputs_embeds=None,
+            labels=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):
@@ -1347,13 +1322,6 @@ class DebertaV2ForSequenceClassification(DebertaV2PreTrainedModel):
             )
 
 
-@add_start_docstrings(
-    """
-    DeBERTa Model with a token classification head on top (a linear layer on top of the hidden-states output) e.g. for
-    Named-Entity-Recognition (NER) tasks.
-    """,
-    DEBERTA_START_DOCSTRING,
-)
 # Copied from transformers.models.deberta.modeling_deberta.DebertaForTokenClassification with Deberta->DebertaV2
 class DebertaV2ForTokenClassification(DebertaV2PreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
@@ -1370,25 +1338,18 @@ class DebertaV2ForTokenClassification(DebertaV2PreTrainedModel):
         for param in self.deberta.parameters():
             param.requires_grad = False
 
-    @add_start_docstrings_to_model_forward(DEBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
-    @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
-        checkpoint=_CHECKPOINT_FOR_DOC,
-        output_type=TokenClassifierOutput,
-        config_class=_CONFIG_FOR_DOC,
-    )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        inputs_embeds=None,
-        labels=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
-        past_key_values=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            inputs_embeds=None,
+            labels=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
+            past_key_values=None,
     ):
         r"""
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
@@ -1439,13 +1400,6 @@ class DebertaV2ForTokenClassification(DebertaV2PreTrainedModel):
         )
 
 
-@add_start_docstrings(
-    """
-    DeBERTa Model with a span classification head on top for extractive question-answering tasks like SQuAD (a linear
-    layers on top of the hidden-states output to compute `span start logits` and `span end logits`).
-    """,
-    DEBERTA_START_DOCSTRING,
-)
 # Copied from transformers.models.deberta.modeling_deberta.DebertaForQuestionAnswering with Deberta->DebertaV2
 class DebertaV2ForQuestionAnswering(DebertaV2PreTrainedModel):
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
@@ -1461,23 +1415,22 @@ class DebertaV2ForQuestionAnswering(DebertaV2PreTrainedModel):
 
     @add_start_docstrings_to_model_forward(DEBERTA_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint=_CHECKPOINT_FOR_DOC,
         output_type=QuestionAnsweringModelOutput,
         config_class=_CONFIG_FOR_DOC,
     )
     def forward(
-        self,
-        input_ids=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        inputs_embeds=None,
-        start_positions=None,
-        end_positions=None,
-        output_attentions=None,
-        output_hidden_states=None,
-        return_dict=None,
+            self,
+            input_ids=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            inputs_embeds=None,
+            start_positions=None,
+            end_positions=None,
+            output_attentions=None,
+            output_hidden_states=None,
+            return_dict=None,
     ):
         r"""
         start_positions (:obj:`torch.LongTensor` of shape :obj:`(batch_size,)`, `optional`):

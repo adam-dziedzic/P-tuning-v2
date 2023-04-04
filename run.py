@@ -17,6 +17,7 @@ os.environ["WANDB_DISABLED"] = "true"
 
 logger = logging.getLogger(__name__)
 
+
 def train(trainer, resume_from_checkpoint=None, last_checkpoint=None):
     checkpoint = None
     if resume_from_checkpoint is not None:
@@ -34,6 +35,7 @@ def train(trainer, resume_from_checkpoint=None, last_checkpoint=None):
 
     trainer.log_best_metrics()
 
+
 def evaluate(trainer):
     logger.info("*** Evaluate ***")
     metrics = trainer.evaluate()
@@ -41,12 +43,13 @@ def evaluate(trainer):
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
 
+
 def predict(trainer, predict_dataset=None):
     if predict_dataset is None:
         logger.info("No dataset is available for testing")
 
     elif isinstance(predict_dataset, dict):
-        
+
         for dataset_name, d in predict_dataset.items():
             logger.info("*** Predict: %s ***" % dataset_name)
             predictions, labels, metrics = trainer.predict(d, metric_key_prefix="predict")
@@ -62,6 +65,7 @@ def predict(trainer, predict_dataset=None):
 
         trainer.log_metrics("predict", metrics)
         trainer.save_metrics("predict", metrics)
+
 
 if __name__ == '__main__':
 
@@ -88,7 +92,6 @@ if __name__ == '__main__':
         + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
     logger.info(f"Training/evaluation parameters {training_args}")
-    
 
     if not os.path.isdir("checkpoints") or not os.path.exists("checkpoints"):
         os.mkdir("checkpoints")
@@ -108,13 +111,14 @@ if __name__ == '__main__':
     elif data_args.task_name.lower() == "srl":
         assert data_args.dataset_name.lower() in SRL_DATASETS
         from tasks.srl.get_trainer import get_trainer
-    
+
     elif data_args.task_name.lower() == "qa":
         assert data_args.dataset_name.lower() in QA_DATASETS
         from tasks.qa.get_trainer import get_trainer
-        
+
     else:
-        raise NotImplementedError('Task {} is not implemented. Please choose a task from: {}'.format(data_args.task_name, ", ".join(TASKS)))
+        raise NotImplementedError(
+            'Task {} is not implemented. Please choose a task from: {}'.format(data_args.task_name, ", ".join(TASKS)))
 
     set_seed(training_args.seed)
 
@@ -134,14 +138,11 @@ if __name__ == '__main__':
                 "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
             )
 
-
     if training_args.do_train:
         train(trainer, training_args.resume_from_checkpoint, last_checkpoint)
-    
+
     # if training_args.do_eval:
     #     evaluate(trainer)
 
     # if training_args.do_predict:
     #     predict(trainer, predict_dataset)
-
-   

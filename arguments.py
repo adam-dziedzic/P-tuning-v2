@@ -38,7 +38,7 @@ class DataTrainingArguments:
         default=128,
         metadata={
             "help": "The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded."
+                    "than this will be truncated, sequences shorter will be padded."
         },
     )
     overwrite_cache: bool = field(
@@ -48,28 +48,28 @@ class DataTrainingArguments:
         default=True,
         metadata={
             "help": "Whether to pad all samples to `max_seq_length`. "
-            "If False, will pad the samples dynamically when batching to the maximum length in the batch."
+                    "If False, will pad the samples dynamically when batching to the maximum length in the batch."
         },
     )
     max_train_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of training examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     max_eval_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of evaluation examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     max_predict_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of prediction examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     train_file: Optional[str] = field(
@@ -79,7 +79,7 @@ class DataTrainingArguments:
         default=None, metadata={"help": "A csv or a json file containing the validation data."}
     )
     test_file: Optional[str] = field(
-        default=None, 
+        default=None,
         metadata={"help": "A csv or a json file containing the test data."}
     )
     template_id: Optional[int] = field(
@@ -89,19 +89,23 @@ class DataTrainingArguments:
         }
     )
 
+
 @dataclass
 class ModelArguments:
     """
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune from.
     """
     model_name_or_path: str = field(
+        default="bert-large-cased",
         metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
     )
     config_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
+        default=None,
+        metadata={"help": "Pretrained config name or path if not the same as model_name"}
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None,
+        metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
     )
     cache_dir: Optional[str] = field(
         default=None,
@@ -119,7 +123,7 @@ class ModelArguments:
         default=False,
         metadata={
             "help": "Will use the token generated when running `transformers-cli login` (necessary to use this script "
-            "with private models)."
+                    "with private models)."
         },
     )
     prefix: bool = field(
@@ -129,7 +133,7 @@ class ModelArguments:
         }
     )
     prompt: bool = field(
-        default=False,
+        default=True,
         metadata={
             "help": "Will use prompt tuning during training"
         }
@@ -145,7 +149,7 @@ class ModelArguments:
         metadata={
             "help": "Apply a two-layer MLP head over the prefix embeddings"
         }
-    ) 
+    )
     prefix_hidden_size: int = field(
         default=512,
         metadata={
@@ -159,6 +163,7 @@ class ModelArguments:
         }
     )
 
+
 @dataclass
 class QuestionAnwseringArguments:
     n_best_size: int = field(
@@ -169,7 +174,7 @@ class QuestionAnwseringArguments:
         default=30,
         metadata={
             "help": "The maximum length of an answer that can be generated. This is needed because the start "
-            "and end predictions are not conditioned on one another."
+                    "and end predictions are not conditioned on one another."
         },
     )
     version_2_with_negative: bool = field(
@@ -179,10 +184,11 @@ class QuestionAnwseringArguments:
         default=0.0,
         metadata={
             "help": "The threshold used to select the null answer: if the best answer has a score that is less than "
-            "the score of the null answer minus this threshold, the null answer is selected for this example. "
-            "Only useful when `version_2_with_negative=True`."
+                    "the score of the null answer minus this threshold, the null answer is selected for this example. "
+                    "Only useful when `version_2_with_negative=True`."
         },
     )
+
 
 def get_args():
     """Parse all the args."""
