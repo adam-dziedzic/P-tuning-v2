@@ -1,0 +1,1 @@
+--model_name_or_path bert-large-cased --task_name superglue --dataset_name rte --do_train --do_eval --max_seq_length 128 --per_device_train_batch_size 32 --learning_rate 0.01 --num_train_epochs 60 --pre_seq_len 20 --output_dir checkpoints/rte-bert/ --overwrite_output_dir --hidden_dropout_prob 0.1 --seed 11 --save_strategy no --evaluation_strategy epoch --prefix
