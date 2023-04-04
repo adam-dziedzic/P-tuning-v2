@@ -37,11 +37,14 @@ from transformers import (
     AutoModelForMultipleChoice
 )
 
+
 class TaskType(Enum):
     TOKEN_CLASSIFICATION = 1,
     SEQUENCE_CLASSIFICATION = 2,
     QUESTION_ANSWERING = 3,
-    MULTIPLE_CHOICE = 4
+    MULTIPLE_CHOICE = 4,
+    SEQUENCE_CLASSIFICATION_PRIVATE = 5,
+
 
 PREFIX_MODELS = {
     "bert": {
@@ -88,13 +91,14 @@ AUTO_MODELS = {
     TaskType.MULTIPLE_CHOICE: AutoModelForMultipleChoice,
 }
 
+
 def get_model(model_args, task_type: TaskType, config: AutoConfig, fix_bert: bool = False):
     if model_args.prefix:
         config.hidden_dropout_prob = model_args.hidden_dropout_prob
         config.pre_seq_len = model_args.pre_seq_len
         config.prefix_projection = model_args.prefix_projection
         config.prefix_hidden_size = model_args.prefix_hidden_size
-        
+
         model_class = PREFIX_MODELS[config.model_type][task_type]
         model = model_class.from_pretrained(
             model_args.model_name_or_path,
@@ -150,11 +154,14 @@ def get_model_deprecated(model_args, task_type: TaskType, config: AutoConfig, fi
         config.prefix_hidden_size = model_args.prefix_hidden_size
 
         if task_type == TaskType.TOKEN_CLASSIFICATION:
-            from model.token_classification import BertPrefixModel, RobertaPrefixModel, DebertaPrefixModel, DebertaV2PrefixModel
+            from model.token_classification import BertPrefixModel, RobertaPrefixModel, DebertaPrefixModel, \
+                DebertaV2PrefixModel
         elif task_type == TaskType.SEQUENCE_CLASSIFICATION:
-            from model.sequence_classification import BertPrefixModel, RobertaPrefixModel, DebertaPrefixModel, DebertaV2PrefixModel
+            from model.sequence_classification import BertPrefixModel, RobertaPrefixModel, DebertaPrefixModel, \
+                DebertaV2PrefixModel
         elif task_type == TaskType.QUESTION_ANSWERING:
-            from model.question_answering import BertPrefixModel, RobertaPrefixModel, DebertaPrefixModel, DebertaV2PrefixModel
+            from model.question_answering import BertPrefixModel, RobertaPrefixModel, DebertaPrefixModel, \
+                DebertaV2PrefixModel
         elif task_type == TaskType.MULTIPLE_CHOICE:
             from model.multiple_choice import BertPrefixModel
 
@@ -204,7 +211,7 @@ def get_model_deprecated(model_args, task_type: TaskType, config: AutoConfig, fi
             )
         else:
             raise NotImplementedError
-            
+
 
     else:
         if task_type == TaskType.TOKEN_CLASSIFICATION:
@@ -213,7 +220,7 @@ def get_model_deprecated(model_args, task_type: TaskType, config: AutoConfig, fi
                 config=config,
                 revision=model_args.model_revision,
             )
-            
+
         elif task_type == TaskType.SEQUENCE_CLASSIFICATION:
             model = AutoModelForSequenceClassification.from_pretrained(
                 model_args.model_name_or_path,
@@ -233,7 +240,7 @@ def get_model_deprecated(model_args, task_type: TaskType, config: AutoConfig, fi
                 config=config,
                 revision=model_args.model_revision,
             )
-    
+
         bert_param = 0
         if fix_bert:
             if config.model_type == "bert":

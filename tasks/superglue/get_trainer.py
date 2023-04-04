@@ -15,6 +15,7 @@ from training.trainer_exp import ExponentialTrainer
 
 logger = logging.getLogger(__name__)
 
+
 def get_trainer(args):
     model_args, data_args, training_args, _ = args
 
@@ -66,6 +67,5 @@ def get_trainer(args):
         data_collator=dataset.data_collator,
         test_key=dataset.test_key
     )
-
 
     return trainer, None

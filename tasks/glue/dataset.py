@@ -33,7 +33,7 @@ class GlueDataset():
         raw_datasets = load_dataset("glue", data_args.dataset_name)
         self.tokenizer = tokenizer
         self.data_args = data_args
-        #labels
+        # labels
         self.is_regression = data_args.dataset_name == "stsb"
         if not self.is_regression:
             self.label_list = raw_datasets["train"].features["label"].names
@@ -92,11 +92,11 @@ class GlueDataset():
         elif training_args.fp16:
             self.data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
 
-
     def preprocess_function(self, examples):
         # Tokenize the texts
         args = (
-            (examples[self.sentence1_key],) if self.sentence2_key is None else (examples[self.sentence1_key], examples[self.sentence2_key])
+            (examples[self.sentence1_key],) if self.sentence2_key is None else (
+            examples[self.sentence1_key], examples[self.sentence2_key])
         )
         result = self.tokenizer(*args, padding=self.padding, max_length=self.max_seq_length, truncation=True)
 
@@ -114,6 +114,3 @@ class GlueDataset():
             return {"mse": ((preds - p.label_ids) ** 2).mean().item()}
         else:
             return {"accuracy": (preds == p.label_ids).astype(np.float32).mean().item()}
-
-
-    
